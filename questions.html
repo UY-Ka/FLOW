@@ -1,0 +1,605 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вопросы для самоконтроля (интерактив)</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Дополнительные стили для интерактивных элементов, не ломающие существующие классы */
+    .quiz-option {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .quiz-option input {
+      margin-top: 3px;
+    }
+    .quiz-option label {
+      font-weight: normal;
+      line-height: 1.4;
+    }
+    .match-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: center;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+    .match-left {
+      font-weight: 600;
+      min-width: 140px;
+    }
+    .match-right select {
+      padding: 6px 10px;
+      border-radius: 20px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      font-family: inherit;
+    }
+    .fill-input {
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid #cbd5e1;
+      font-family: inherit;
+      width: 200px;
+      margin-left: 8px;
+    }
+    .question-item {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 1.25rem;
+    }
+    .correct-feedback {
+      color: #10b981;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+    .wrong-feedback {
+      color: #ef4444;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+    .neutral-feedback {
+      font-size: 0.85rem;
+      margin-top: 6px;
+      color: #64748b;
+    }
+    .btn-check {
+      background: #3b82f6;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: white;
+      cursor: pointer;
+      margin: 24px 0 16px;
+      transition: 0.2s;
+    }
+    .btn-check:hover {
+      background: #2563eb;
+      transform: scale(0.98);
+    }
+    .result-summary {
+      background: #e6f0ff;
+      padding: 16px 24px;
+      border-radius: 28px;
+      margin-top: 20px;
+      font-weight: 500;
+    }
+    .match-badge {
+      background: #e2e8f0;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+    }
+    .question-block p {
+      margin: 8px 0;
+    }
+    h3 {
+      margin-top: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .correct-answer {
+      color: #0f3b2c;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <aside class="sidebar fade-in">
+    <div class="brand">
+      <a class="brand-link" href="index.html"><span class="brand-dot">🏠</span>course.</a>
+    </div>
+    <div class="menu-title">Навигация</div>
+    <a class="menu-link" href="index.html"><span class="icon">🏠</span>Главная</a>
+    <a class="menu-link" href="lectures.html"><span class="icon">🎓</span>Лекции</a>
+    <a class="menu-link" href="labs.html"><span class="icon">🧪</span>Практические</a>
+    <a class="menu-link active" href="questions.html"><span class="icon">❓</span>Вопросы</a>
+  </aside>
+
+  <main class="main-panel fade-in">
+    <div class="topbar">
+      <h1>Вопросы для самоконтроля</h1>
+      <div class="top-actions">
+        <a class="chip-btn secondary" href="index.html">На главную</a>
+      </div>
+    </div>
+
+    <section class="content-card prose question-block" id="quizContainer">
+      <!-- динамически генерируемые вопросы (сохраняем полное содержимое всех вопросов) -->
+    </section>
+    <div style="text-align: center;">
+      <button class="btn-check" id="checkAnswersBtn">✅ Проверить ответы</button>
+    </div>
+    <div id="resultArea" class="result-summary" style="display: none;"></div>
+  </main>
+</div>
+
+<script>
+  // ======================== ДАННЫЕ ТЕСТА (полное соответствие исходным вопросам) =======================
+  const questionsData = [
+    { // 1
+      type: "single",
+      text: "1. Что понимается под данными?",
+      options: ["Формализованные значения, пригодные для хранения и обработки", "Интерпретированная информация", "Знания пользователя", "Алгоритмы обработки"],
+      correct: [0]
+    },
+    { // 2
+      type: "multiple",
+      text: "2. Какие недостатки файловых систем?",
+      options: ["Дублирование данных", "Зависимость программ от структуры данных", "Высокая безопасность", "Трудности параллельного доступа"],
+      correct: [0,1,3]  // высокая безопасность — преимущество
+    },
+    { // 3
+      type: "fill",
+      text: "3. Минимальная единица хранения данных называется _______:",
+      correctAnswer: "поле"
+    },
+    { // 4 — сопоставление внешний->представление, концептуальный->логическая, физический->хранение
+      type: "match",
+      text: "4. Соотнесите уровни архитектуры БД:",
+      pairs: [
+        { left: "Внешний", rightMatch: "представление пользователя" },
+        { left: "Концептуальный", rightMatch: "логическая модель" },
+        { left: "Физический", rightMatch: "хранение данных" }
+      ]
+    },
+    { // 5
+      type: "single",
+      text: "5. Сколько уровней в архитектуре БД?",
+      options: ["2", "3", "4", "5"],
+      correct: [1] // 3 уровня
+    },
+    { // 6
+      type: "multiple",
+      text: "6. Свойства транзакции:",
+      options: ["атомарность", "согласованность", "скорость", "изолированность"],
+      correct: [0,1,3]  // скорость не свойство ACID
+    },
+    { // 7
+      type: "fill",
+      text: "7. СУБД – это __________ программных средств.",
+      correctAnswer: "комплекс"
+    },
+    { // 8
+      type: "single",
+      text: "8. Кто отвечает за безопасность БД?",
+      options: ["Программист", "Администратор БД", "Пользователь", "Аналитик"],
+      correct: [1]
+    },
+    { // 9
+      type: "multiple",
+      text: "9. Функции СУБД:",
+      options: ["управление доступом", "выполнение запросов", "печать документов", "поддержка целостности"],
+      correct: [0,1,3]
+    },
+    { // 10 тип: сопоставление характеристик архитектур
+      type: "match",
+      text: "10. Тип архитектуры — характеристика:",
+      pairs: [
+        { left: "Клиент-сервер", rightMatch: "сервер обрабатывает запросы" },
+        { left: "Файл-сервер", rightMatch: "СУБД у клиента" },
+        { left: "Встраиваемая", rightMatch: "внутри приложения" }
+      ]
+    },
+    { // 11
+      type: "single",
+      text: "11. Самый распространённый тип архитектуры:",
+      options: ["Файл-сервер", "Клиент-сервер", "Встраиваемая", "Локальная"],
+      correct: [1]
+    },
+    { // 12
+      type: "fill",
+      text: "12. Модель «сущность-связь» предложил:",
+      correctAnswer: "Питер Чен"
+    },
+    { // 13
+      type: "multiple",
+      text: "13. Этапы проектирования БД:",
+      options: ["анализ предметной области", "концептуальное", "документирование", "логическое"],
+      correct: [0,1,3]
+    },
+    { // 14 сопоставление типов связей
+      type: "match",
+      text: "14. Тип связи – описание:",
+      pairs: [
+        { left: "1:1", rightMatch: "один к одному" },
+        { left: "1: N", rightMatch: "один ко многим" },
+        { left: "M: N", rightMatch: "многие ко многим" }
+      ]
+    },
+    { // 15
+      type: "single",
+      text: "15. Что является сущностью?",
+      options: ["Поле", "Объект реального мира", "Связь", "Запрос"],
+      correct: [1]
+    },
+    { // 16
+      type: "fill",
+      text: "16. ER-диаграмма – это __________ модель.",
+      correctAnswer: "визуальная"
+    },
+    { // 17
+      type: "multiple",
+      text: "17. Атрибуты сущности:",
+      options: ["свойства", "характеристики", "операции", "алгоритмы"],
+      correct: [0,1]
+    },
+    { // 18
+      type: "single",
+      text: "18. Что устраняет нормализация?",
+      options: ["Ошибки кода", "Аномалии данных", "Ошибки пользователей", "Задержки"],
+      correct: [1]
+    },
+    { // 19
+      type: "multiple",
+      text: "19. Требования 1NF:",
+      options: ["атомарность", "отсутствие дубликатов", "один тип данных", "наличие индекса"],
+      correct: [0,1,2]
+    },
+    { // 20
+      type: "fill",
+      text: "20. Ключ – это столбец, который __________ строку.",
+      correctAnswer: "идентифицирует"
+    },
+    { // 21 сопоставление НФ
+      type: "match",
+      text: "21. Нормальная форма — требование:",
+      pairs: [
+        { left: "1NF", rightMatch: "атомарность" },
+        { left: "2NF", rightMatch: "зависимость от ключа" },
+        { left: "3NF", rightMatch: "отсутствие транзитивности" }
+      ]
+    },
+    { // 22
+      type: "single",
+      text: "22. Стандартная нормализация – до:",
+      options: ["2NF", "3NF", "4NF", "5NF"],
+      correct: [1] // 3NF
+    },
+    { // 23
+      type: "multiple",
+      text: "23. DDL включает:",
+      options: ["CREATE", "ALTER", "DROP", "SELECT"],
+      correct: [0,1,2]
+    },
+    { // 24
+      type: "single",
+      text: "24. SQL – это язык:",
+      options: ["Процедурный", "Декларативный", "Машинный", "Ассемблер"],
+      correct: [1]
+    },
+    { // 25
+      type: "fill",
+      text: "25. Команда для создания таблицы:",
+      correctAnswer: "CREATE TABLE"
+    },
+    { // 26
+      type: "multiple",
+      text: "26. DML включает:",
+      options: ["INSERT", "UPDATE", "DELETE", "CREATE"],
+      correct: [0,1,2]
+    },
+    { // 27 сопоставление команд
+      type: "match",
+      text: "27. Команда – действие:",
+      pairs: [
+        { left: "INSERT", rightMatch: "добавление" },
+        { left: "UPDATE", rightMatch: "изменение" },
+        { left: "DELETE", rightMatch: "удаление" }
+      ]
+    },
+    { // 28
+      type: "single",
+      text: "28. SELECT относится к:",
+      options: ["DDL", "DML", "Системным", "Логическим"],
+      correct: [1] // DML
+    },
+    { // 29
+      type: "fill",
+      text: "29. Команда удаления таблицы:",
+      correctAnswer: "DROP TABLE"
+    },
+    { // 30
+      type: "multiple",
+      text: "30. Операторы SELECT:",
+      options: ["WHERE", "GROUP BY", "ORDER BY", "CREATE"],
+      correct: [0,1,2]
+    },
+    { // 31
+      type: "single",
+      text: "31. Что делает WHERE?",
+      options: ["Сортирует", "Фильтрует", "Удаляет", "Создаёт"],
+      correct: [1]
+    },
+    { // 32
+      type: "match",
+      text: "32. Оператор – функция:",
+      pairs: [
+        { left: "WHERE", rightMatch: "фильтрация" },
+        { left: "ORDER BY", rightMatch: "сортировка" },
+        { left: "GROUP BY", rightMatch: "группировка" }
+      ]
+    },
+    { // 33
+      type: "fill",
+      text: "33. Команда выборки данных:",
+      correctAnswer: "SELECT"
+    },
+    { // 34
+      type: "multiple",
+      text: "34. Спецификаторы SELECT:",
+      options: ["DISTINCT", "ALL", "TOP", "DELETE"],
+      correct: [0,1,2]
+    },
+    { // 35
+      type: "single",
+      text: "35. DISTINCT делает:",
+      options: ["Сортировку", "Убирает дубликаты", "Удаляет таблицу", "Группирует"],
+      correct: [1]
+    },
+    { // 36
+      type: "fill",
+      text: "36. Оператор сортировки:",
+      correctAnswer: "ORDER BY"
+    },
+    { // 37
+      type: "multiple",
+      text: "37. Операторы WHERE:",
+      options: ["AND", "OR", "NOT", "CREATE"],
+      correct: [0,1,2]
+    },
+    { // 38
+      type: "single",
+      text: "38. Что делает GROUP BY?",
+      options: ["Удаляет строки", "Группирует данные", "Сортирует", "Обновляет"],
+      correct: [1]
+    },
+    { // 39
+      type: "match",
+      text: "39. Тип запроса – назначение:",
+      pairs: [
+        { left: "SELECT", rightMatch: "выборка" },
+        { left: "INSERT", rightMatch: "добавление" },
+        { left: "DELETE", rightMatch: "удаление" }
+      ]
+    },
+    { // 40
+      type: "fill",
+      text: "40. Оператор обновления данных:",
+      correctAnswer: "UPDATE"
+    }
+  ];
+
+  let userSelections = {}; // хранение ответов для каждого вопроса
+
+  function renderQuiz() {
+    const container = document.getElementById('quizContainer');
+    container.innerHTML = '';
+    questionsData.forEach((q, idx) => {
+      const qDiv = document.createElement('div');
+      qDiv.className = 'question-item';
+      qDiv.setAttribute('data-qid', idx);
+      const title = document.createElement('h3');
+      title.innerText = q.text;
+      qDiv.appendChild(title);
+
+      if (q.type === 'single') {
+        q.options.forEach((opt, optIdx) => {
+          const div = document.createElement('div');
+          div.className = 'quiz-option';
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = `q${idx}`;
+          radio.value = optIdx;
+          radio.addEventListener('change', (e) => {
+            if (e.target.checked) userSelections[idx] = [parseInt(e.target.value)];
+          });
+          const label = document.createElement('label');
+          label.innerText = opt;
+          div.appendChild(radio);
+          div.appendChild(label);
+          qDiv.appendChild(div);
+        });
+      } 
+      else if (q.type === 'multiple') {
+        q.options.forEach((opt, optIdx) => {
+          const div = document.createElement('div');
+          div.className = 'quiz-option';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = optIdx;
+          cb.addEventListener('change', (e) => {
+            let selected = userSelections[idx] || [];
+            if (e.target.checked) {
+              if (!selected.includes(optIdx)) selected.push(optIdx);
+            } else {
+              selected = selected.filter(v => v !== optIdx);
+            }
+            userSelections[idx] = selected;
+          });
+          const label = document.createElement('label');
+          label.innerText = opt;
+          div.appendChild(cb);
+          div.appendChild(label);
+          qDiv.appendChild(div);
+        });
+      }
+      else if (q.type === 'fill') {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'fill-input';
+        input.placeholder = 'Введите ответ...';
+        input.addEventListener('input', (e) => {
+          userSelections[idx] = [e.target.value.trim().toLowerCase()];
+        });
+        qDiv.appendChild(input);
+      }
+      else if (q.type === 'match') {
+        const matchContainer = document.createElement('div');
+        matchContainer.style.marginTop = '8px';
+        const savedMatches = userSelections[idx] || {};
+        q.pairs.forEach((pair, pairIdx) => {
+          const row = document.createElement('div');
+          row.className = 'match-row';
+          const leftSpan = document.createElement('span');
+          leftSpan.className = 'match-left';
+          leftSpan.innerText = pair.left;
+          const select = document.createElement('select');
+          const optionsPool = q.pairs.map(p => p.rightMatch);
+          const uniqueOpts = [...new Set(optionsPool)];
+          uniqueOpts.unshift('— выберите —');
+          uniqueOpts.forEach(optVal => {
+            const optionEl = document.createElement('option');
+            optionEl.value = optVal;
+            optionEl.innerText = optVal;
+            select.appendChild(optionEl);
+          });
+          if (savedMatches[pair.left]) select.value = savedMatches[pair.left];
+          select.addEventListener('change', (e) => {
+            if (!userSelections[idx]) userSelections[idx] = {};
+            userSelections[idx][pair.left] = e.target.value;
+          });
+          row.appendChild(leftSpan);
+          row.appendChild(select);
+          matchContainer.appendChild(row);
+        });
+        qDiv.appendChild(matchContainer);
+      }
+      container.appendChild(qDiv);
+    });
+  }
+
+  function checkAnswers() {
+    let total = 0;
+    let correctCount = 0;
+    const details = [];
+
+    for (let i = 0; i < questionsData.length; i++) {
+      const q = questionsData[i];
+      const userAnswer = userSelections[i];
+      let isCorrect = false;
+      let userDisplay = '—';
+      let correctDisplay = '';
+
+      if (q.type === 'single') {
+        total++;
+        const selected = userAnswer ? userAnswer[0] : undefined;
+        const correctIdx = q.correct[0];
+        userDisplay = (selected !== undefined) ? q.options[selected] : '(не выбран)';
+        correctDisplay = q.options[correctIdx];
+        isCorrect = (selected === correctIdx);
+        if (isCorrect) correctCount++;
+      } 
+      else if (q.type === 'multiple') {
+        total++;
+        const selected = userAnswer || [];
+        const correctArr = q.correct;
+        const sortedSelected = [...selected].sort();
+        const sortedCorrect = [...correctArr].sort();
+        isCorrect = JSON.stringify(sortedSelected) === JSON.stringify(sortedCorrect);
+        userDisplay = selected.map(s => q.options[s]).join(', ') || '(ничего)';
+        correctDisplay = correctArr.map(c => q.options[c]).join(', ');
+        if (isCorrect) correctCount++;
+      }
+      else if (q.type === 'fill') {
+        total++;
+        const userStr = userAnswer ? userAnswer[0] : '';
+        const correctRaw = q.correctAnswer;
+        const normalize = (s) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+        const isMatch = normalize(userStr) === normalize(correctRaw);
+        isCorrect = isMatch;
+        userDisplay = userStr || '(пусто)';
+        correctDisplay = q.correctAnswer;
+        if (isCorrect) correctCount++;
+      }
+      else if (q.type === 'match') {
+        total++;
+        const userMap = userAnswer || {};
+        const pairs = q.pairs;
+        let allMatches = true;
+        let matchDetails = [];
+        for (let p of pairs) {
+          const userVal = userMap[p.left] || '— выберите —';
+          const expected = p.rightMatch;
+          const matched = (userVal === expected);
+          if (!matched) allMatches = false;
+          matchDetails.push(`${p.left} → ${userVal} (должно: ${expected})`);
+        }
+        isCorrect = allMatches;
+        userDisplay = matchDetails.join('; ');
+        correctDisplay = pairs.map(p => `${p.left} → ${p.rightMatch}`).join('; ');
+        if (isCorrect) correctCount++;
+      }
+      details.push({ idx: i, text: q.text, isCorrect, userDisplay, correctDisplay });
+    }
+
+    // Показать результаты с подсветкой каждого вопроса
+    const resultDiv = document.getElementById('resultArea');
+    resultDiv.style.display = 'block';
+    const percent = Math.round((correctCount / total) * 100);
+    let summaryHtml = `<strong>📊 Результат: ${correctCount} из ${total} (${percent}%)</strong><br><br>`;
+    summaryHtml += `<div style="max-height: 400px; overflow-y: auto; font-size: 0.9rem;">`;
+    for (let d of details) {
+      const statusIcon = d.isCorrect ? '✅' : '❌';
+      summaryHtml += `<div style="margin-bottom: 14px; border-left: 3px solid ${d.isCorrect ? '#10b981' : '#ef4444'}; padding-left: 12px;">`;
+      summaryHtml += `<div><strong>${statusIcon} Вопрос ${d.idx+1}:</strong> ${d.text.substring(0, 80)}${d.text.length>80 ? '…' : ''}</div>`;
+      summaryHtml += `<div style="font-size:0.8rem; color:#334155;">Ваш ответ: ${d.userDisplay}</div>`;
+      if (!d.isCorrect) {
+        summaryHtml += `<div style="font-size:0.8rem; color:#0f3b2c;">✓ Правильный: ${d.correctDisplay}</div>`;
+      }
+      summaryHtml += `</div>`;
+    }
+    summaryHtml += `</div>`;
+    resultDiv.innerHTML = summaryHtml;
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // дополнительно подсветим в интерфейсе метки правильности (под каждым вопросом)
+    for (let i = 0; i < questionsData.length; i++) {
+      const qDiv = document.querySelector(`.question-item[data-qid='${i}']`);
+      if (!qDiv) continue;
+      let oldFeedback = qDiv.querySelector('.feedback-marker');
+      if (oldFeedback) oldFeedback.remove();
+      const fbSpan = document.createElement('div');
+      fbSpan.className = details[i].isCorrect ? 'correct-feedback' : 'wrong-feedback';
+      fbSpan.classList.add('feedback-marker');
+      fbSpan.innerText = details[i].isCorrect ? '✓ Верно' : '✗ Неверно';
+      qDiv.appendChild(fbSpan);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderQuiz();
+    const checkBtn = document.getElementById('checkAnswersBtn');
+    checkBtn.addEventListener('click', checkAnswers);
+  });
+</script>
+</body>
+</html>
